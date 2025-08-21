@@ -10,9 +10,6 @@ public class PlayerInputManager : MonoBehaviour
     private bool arrowsJoined = false;
     private bool gamepadJoined = false;
 
-    [SerializeField] private int maxGamepads = 4; // Max number of gamepads allowed (adjust as needed)
-private List<Gamepad> joinedGamepads = new List<Gamepad>(); // Track joined gamepads
-
     void Update()
     {
         if (Keyboard.current == null) return;
