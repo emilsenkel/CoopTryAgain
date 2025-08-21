@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+using System.Collections.Generic;
+
 public class PlayerInputManager : MonoBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
@@ -8,7 +10,6 @@ public class PlayerInputManager : MonoBehaviour
 
     private bool wasdJoined = false;
     private bool arrowsJoined = false;
-    private bool gamepadJoined = false;
 
     [SerializeField] private int maxGamepads = 4; // Max number of gamepads allowed (adjust as needed)
 private List<Gamepad> joinedGamepads = new List<Gamepad>(); // Track joined gamepads
@@ -16,6 +17,7 @@ private List<Gamepad> joinedGamepads = new List<Gamepad>(); // Track joined game
     void Update()
     {
         if (Keyboard.current == null) return;
+        if (spawnPoints == null || spawnPoints.Length == 0) return; // Skip if no spawn points set
 
         if (!wasdJoined && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
@@ -52,19 +54,26 @@ private List<Gamepad> joinedGamepads = new List<Gamepad>(); // Track joined game
         }
 
         foreach (var gamePad in Gamepad.all)
+{
+    if (gamePad.buttonSouth.wasPressedThisFrame && !joinedGamepads.Contains(gamePad) && joinedGamepads.Count < maxGamepads)
+    {
+        var player = PlayerInput.Instantiate(playerPrefab,
+            controlScheme: "Gamepad",
+            pairWithDevice: gamePad);
+
+        player.GetComponent<Renderer>().material.color = GetRandomColor();
+        player.GetComponent<PlayerController>().SetLabel($"Gamepad {joinedGamepads.Count + 1}");
+
+        // Assign spawn point based on how many gamepads are already joined
+        int spawnIndex = 2 + joinedGamepads.Count; // Keyboard uses 0 and 1, gamepads start at 2
+        if (spawnPoints.Length > spawnIndex)
         {
-            if (gamePad.buttonSouth.wasPressedThisFrame && !gamepadJoined)
-            {
-                var player = PlayerInput.Instantiate(playerPrefab,
-                    controlScheme: "Gamepad",
-                    pairWithDevice: gamePad);
-
-                player.GetComponent<Renderer>().material.color = GetRandomColor();
-                player.GetComponent<PlayerController>().SetLabel("Gamepad");
-
-                gamepadJoined = true;
-            }
+            player.transform.position = spawnPoints[spawnIndex].position;
         }
+
+        joinedGamepads.Add(gamePad); // Mark this gamepad as joined
+    }
+}
     }
 
     private static Color GetRandomColor()
