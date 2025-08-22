@@ -1,21 +1,43 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class LaundryBasket : MonoBehaviour
 {
     public int capacity = 20;
-    public int currentAmount = 0;
+    [SerializeField] private Transform holdPoint; // Drag the "BasketHold" child GameObject here in Inspector
 
-    public bool AddLaundry(int amountToAdd)
+    private List<GameObject> containedLaundry = new List<GameObject>();
+
+    void Awake()
     {
-        if (currentAmount + amountToAdd > capacity) return false;
-        currentAmount += amountToAdd;
+        if (holdPoint == null)
+        {
+            Debug.LogError("HoldPoint transform not assigned in LaundryBasket!");
+        }
+    }
+
+    public bool AddItem(GameObject item)
+    {
+        if (containedLaundry.Count >= capacity) return false;
+        containedLaundry.Add(item);
+        item.transform.SetParent(holdPoint);
+        item.transform.localPosition = Vector3.up * containedLaundry.Count * 0.2f; // Stack visually
+        item.transform.localRotation = Quaternion.identity;
         return true;
     }
 
-    public bool RemoveLaundry(int amountToRemove)
+    public GameObject RemoveItem()
     {
-        if (currentAmount < amountToRemove) return false;
-        currentAmount -= amountToRemove;
-        return true;
+        if (containedLaundry.Count == 0) return null;
+        int lastIndex = containedLaundry.Count - 1;
+        GameObject item = containedLaundry[lastIndex];
+        containedLaundry.RemoveAt(lastIndex);
+        item.transform.SetParent(null); // Detach
+        return item;
+    }
+
+    public int GetCurrentCount()
+    {
+        return containedLaundry.Count;
     }
 }

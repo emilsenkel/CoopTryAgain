@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8212565592489982058}
   - component: {fileID: 6359476992032614768}
   - component: {fileID: 7869681064889629279}
-  - component: {fileID: 6857566806306404033}
+  - component: {fileID: -8095875172377205978}
   m_Layer: 0
   m_Name: LaundryBasket
   m_TagString: Untagged
@@ -32,7 +32,8 @@ Transform:
   m_LocalPosition: {x: 3.577141, y: 0.25000024, z: 6.0580287}
   m_LocalScale: {x: 0.8858316, y: 0.7758, z: 1.6024277}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2678167392174007214}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8212565592489982058
@@ -112,7 +113,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &6857566806306404033
+--- !u!114 &-8095875172377205978
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -125,4 +126,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LaundryBasket
   capacity: 20
-  currentAmount: 0
+  holdPoint: {fileID: 2678167392174007214}
+--- !u!1 &5421025906490517639
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2678167392174007214}
+  m_Layer: 0
+  m_Name: BasketHold
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2678167392174007214
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5421025906490517639}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.031993724, y: 0.4999997, z: 0.11988778}
+  m_LocalScale: {x: 1.1288826, y: 1.288992, z: 0.6240531}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6642464253881473280}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
