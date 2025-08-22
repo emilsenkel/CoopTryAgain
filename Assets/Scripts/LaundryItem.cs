@@ -2,5 +2,19 @@ using UnityEngine;
 
 public class LaundryItem : MonoBehaviour
 {
-    // No 'amount' needed anymore, as each item is 1 piece
+    public enum ItemState
+    {
+        OnFloor,
+        InHand,
+        InBasket
+    }
+
+    [SerializeField] private ItemState state = ItemState.OnFloor;
+
+    public ItemState State => state;
+
+    public void SetState(ItemState newState)
+    {
+        state = newState;
+    }
 }

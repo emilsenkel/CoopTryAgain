@@ -6,6 +6,7 @@ public class LaundryBasket : MonoBehaviour
     public int capacity = 20;
     [SerializeField] private Transform holdPoint; // Drag the "BasketHold" child GameObject here in Inspector
 
+    // Note: overflow into basket is allowed visually, but there are no random drops on overload.
     private List<GameObject> containedLaundry = new List<GameObject>();
 
     void Awake()
@@ -18,12 +19,32 @@ public class LaundryBasket : MonoBehaviour
 
     public bool AddItem(GameObject item)
     {
-        if (containedLaundry.Count >= capacity) return false;
+        // Add item to basket, parent it to the basket's holdPoint, and stack visually.
         containedLaundry.Add(item);
-        item.transform.SetParent(holdPoint);
-        item.transform.localPosition = Vector3.up * containedLaundry.Count * 0.2f; // Stack visually
-        item.transform.localRotation = Quaternion.identity;
+        if (holdPoint != null)
+        {
+            item.transform.SetParent(holdPoint);
+            item.transform.localPosition = Vector3.up * containedLaundry.Count * 0.2f; // Stack visually
+            item.transform.localRotation = Quaternion.identity;
+        }
+        else
+        {
+            // Fallback: parent to basket transform
+            item.transform.SetParent(transform);
+        }
+
+    // Mark as in-basket if LaundyItem component exists
+    var li = item.GetComponent<LaundryItem>();
+    if (li != null) li.SetState(LaundryItem.ItemState.InBasket);
+
+        // Always report true for normal behavior — basket accepts items (visually it can overflow)
         return true;
+    }
+
+    // Helper to check whether this basket already contains the item
+    public bool ContainsItem(GameObject item)
+    {
+        return containedLaundry.Contains(item);
     }
 
     public GameObject RemoveItem()
@@ -33,6 +54,8 @@ public class LaundryBasket : MonoBehaviour
         GameObject item = containedLaundry[lastIndex];
         containedLaundry.RemoveAt(lastIndex);
         item.transform.SetParent(null); // Detach
+    var li = item.GetComponent<LaundryItem>();
+    if (li != null) li.SetState(LaundryItem.ItemState.OnFloor);
         return item;
     }
 
