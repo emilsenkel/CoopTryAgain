@@ -18,7 +18,8 @@ public class PlayerController : MonoBehaviour
     private int handsCapacity = 5;
     private List<GameObject> heldLaundry = new List<GameObject>();
     private LaundryBasket equippedBasket = null;
-    private float interactRange = 5f; // Distance to detect items
+
+    [SerializeField] private float pickupRadius = 2f; // Big radius for easy collection around player (tweak in Inspector)
 
     // Awake is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
@@ -41,43 +42,54 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log("Take button pressed!"); // Feedback to confirm press
 
-        // Adjusted raycast: Lower origin to knee height and add slight downward angle for floor items
-        Vector3 rayOrigin = transform.position + Vector3.up * 0.3f;
-        Vector3 rayDirection = transform.forward + Vector3.down * 0.2f; // Slight down tilt
-        if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, interactRange))
-        {
-            Debug.Log("Raycast hit something! Name: " + hit.collider.name); // Feedback on hit
+        // Wide area pickup: Use a big sphere around the player to detect and grab all nearby laundry/baskets (forgiving vacuum mode)
+        Vector3 pickupCenter = transform.position + Vector3.up * 0.5f + transform.forward * 0.5f; // Slightly up and forward from feet
+        Collider[] hits = Physics.OverlapSphere(pickupCenter, pickupRadius); // Get ALL colliders in the sphere
 
-            // Check for LaundryItem component
-            LaundryItem laundry = hit.collider.GetComponent<LaundryItem>();
+        // Visualize the pickup area (big green sphere in Scene view)
+        DrawWireSphere(pickupCenter, pickupRadius, Color.green, 2f);
+
+        bool pickedSomething = false;
+        foreach (Collider colliderHit in hits)
+        {
+            // Check for LaundryItem
+            LaundryItem laundry = colliderHit.GetComponent<LaundryItem>();
             if (laundry != null)
             {
                 PickUpLaundry(laundry);
-                return; // Picked, so exit
+                pickedSomething = true;
+                continue; // Keep checking for more
             }
 
-            // Check for LaundryBasket component
-            LaundryBasket basket = hit.collider.GetComponent<LaundryBasket>();
+            // Check for LaundryBasket (only if not equipped)
+            LaundryBasket basket = colliderHit.GetComponent<LaundryBasket>();
             if (basket != null && equippedBasket == null)
             {
                 EquipBasket(basket);
-                return; // Equipped, so exit
+                pickedSomething = true;
+                // Don't break—could pick laundry too, but basket is single
             }
-        } else
-        {
-            Debug.Log("Raycast missed—no hit!"); // Feedback on miss
         }
 
-        // No target hit: Do transfer if has basket
-        if (equippedBasket != null)
+        if (pickedSomething)
         {
-            if (heldLaundry.Count > 0 || equippedBasket.GetCurrentCount() > 0)
+            Debug.Log("Picked up items in area!");
+        }
+        else
+        {
+            Debug.Log("No items in pickup area!");
+        }
+
+        // Only drop if nothing was picked up (no target in area)
+        if (!pickedSomething)
+        {
+            if (equippedBasket != null)
             {
-                TransferLaundry(); // Transfer if there's laundry
+                DropBasket(); // Drops the entire basket with laundry inside
             }
-            else
+            else if (heldLaundry.Count > 0)
             {
-                DropBasket(); // Drop if no laundry (empty hands and basket)
+                DropHeldLaundry(); // Drops all held laundry on the floor
             }
         }
     }
@@ -168,6 +180,63 @@ public class PlayerController : MonoBehaviour
             if (toTransfer > 0)
             {
                 Debug.Log($"Transferred {toTransfer} from basket. Hands: {heldLaundry.Count}, Basket: {equippedBasket.GetCurrentCount()}");
+            }
+        }
+    }
+
+    private void DropHeldLaundry()
+    {
+        while (heldLaundry.Count > 0)
+        {
+            int lastIndex = heldLaundry.Count - 1;
+            GameObject item = heldLaundry[lastIndex];
+            heldLaundry.RemoveAt(lastIndex);
+            item.transform.SetParent(null);
+            // Drop in front with a slight random scatter for chaos
+            Vector3 dropPosition = transform.position + transform.forward * 1f + Random.insideUnitSphere * 0.5f;
+            item.transform.position = new Vector3(dropPosition.x, 0f, dropPosition.z); // Snap to floor y=0, adjust if your floor is different
+            item.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f); // Random rotation for fun
+        }
+        Debug.Log("Dropped all held laundry!");
+    }
+
+    private void DrawWireSphere(Vector3 center, float radius, Color color, float duration, int quality = 3)
+    {
+        quality = Mathf.Clamp(quality, 1, 10);
+
+        int segments = quality << 2;
+        int subdivisions = quality << 3;
+        int halfSegments = segments >> 1;
+        float strideAngle = 360F / subdivisions;
+        float segmentStride = 180F / segments;
+
+        Vector3 first;
+        Vector3 next;
+        for (int i = 0; i < segments; i++)
+        {
+            first = (Vector3.forward * radius);
+            first = Quaternion.AngleAxis(segmentStride * (i - halfSegments), Vector3.right) * first;
+
+            for (int j = 0; j < subdivisions; j++)
+            {
+                next = Quaternion.AngleAxis(strideAngle, Vector3.up) * first;
+                Debug.DrawLine(first + center, next + center, color, duration);
+                first = next;
+            }
+        }
+
+        Vector3 axis;
+        for (int i = 0; i < segments; i++)
+        {
+            first = (Vector3.forward * radius);
+            first = Quaternion.AngleAxis(segmentStride * (i - halfSegments), Vector3.up) * first;
+            axis = Quaternion.AngleAxis(90F, Vector3.up) * first;
+
+            for (int j = 0; j < subdivisions; j++)
+            {
+                next = Quaternion.AngleAxis(strideAngle, axis) * first;
+                Debug.DrawLine(first + center, next + center, color, duration);
+                first = next;
             }
         }
     }
